@@ -1,0 +1,12 @@
+server:
+  port: 8081
+---
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:15432/cliente_persona_db
+    username: cliente_persona_usr
+    password: cliente_persona_pwd
+---
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG
