@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerResponseVo {
-    private Long id;
+    private UUID id;
     private String name;
     private String gender;
     private LocalDate dateBirth;

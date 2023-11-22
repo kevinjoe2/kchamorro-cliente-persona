@@ -15,10 +15,7 @@ import java.util.UUID;
 public class CustomerEntity extends PersonEntity {
 
     @Id
-    public Long id;
-
-    @Column("customer_number")
-    private String customerNumber;
+    public UUID id;
 
     private String password;
 
@@ -26,10 +23,9 @@ public class CustomerEntity extends PersonEntity {
 
     @Builder
     public CustomerEntity(String name, String gender, LocalDate dateBirth, String documentNumber, String address,
-                          String phone, Long id, String customerNumber, String password, String state) {
+                          String phone, UUID id, String password, String state) {
         super(name, gender, dateBirth, documentNumber, address, phone);
         this.id = id;
-        this.customerNumber = customerNumber;
         this.password = password;
         this.state = state;
     }

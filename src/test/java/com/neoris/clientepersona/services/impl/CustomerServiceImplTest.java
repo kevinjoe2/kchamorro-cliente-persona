@@ -40,14 +40,13 @@ class CustomerServiceImplTest {
     void findAll() {
 
         Flux<CustomerEntity> list1 = Flux.just(CustomerEntity.builder()
-                        .id(1L)
+                        .id(UUID.randomUUID())
                         .name("name")
                         .gender("gender")
                         .dateBirth(LocalDate.now())
                         .documentNumber("documentNumber")
                         .address("address")
                         .phone("phone")
-                        .customerNumber("customerNumber")
                         .password("password")
                         .state("ACT")
                 .build());

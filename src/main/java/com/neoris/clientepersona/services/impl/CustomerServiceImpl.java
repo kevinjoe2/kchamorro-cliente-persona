@@ -1,6 +1,7 @@
 package com.neoris.clientepersona.services.impl;
 
 import com.neoris.clientepersona.entities.CustomerEntity;
+import com.neoris.clientepersona.exceptions.ClientePersonaException;
 import com.neoris.clientepersona.repos.CustomerRepo;
 import com.neoris.clientepersona.services.CustomerService;
 import com.neoris.clientepersona.utils.mappers.CustomerMapper;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -31,7 +33,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public Mono<CustomerResponseVo> findById(Long id) {
+    public Mono<CustomerResponseVo> findById(UUID id) {
         return customerRepo.findById(id)
                 .map(customerMapper::toCustomerDto);
     }
@@ -39,19 +41,27 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Mono<CustomerResponseVo> findByDocumentNumber(String documentNumber) {
         return customerRepo.findFirstByDocumentNumber(documentNumber)
-                .switchIfEmpty(Mono.error(new RuntimeException("El cliente con dicho numero de cuenta no existe")))
+                .switchIfEmpty(Mono.error(new ClientePersonaException("El cliente con dicho numero de cuenta no existe")))
                 .map(customerMapper::toCustomerDto);
     }
 
     @Override
-    public Mono<Long> findCustomerIdByDocumentNumber(String documentNumber) {
+    public Mono<UUID> findCustomerIdByDocumentNumber(String documentNumber) {
         return customerRepo.findFirstByDocumentNumber(documentNumber)
                 .map(CustomerEntity::getId);
     }
 
     @Override
-    public Mono<CustomerResponseVo> save(Mono<CustomerRequestVo> customerRequestDtoMono) {
-        return customerRequestDtoMono
+    public Mono<CustomerResponseVo> save(CustomerRequestVo customerRequestVo) {
+        return customerRepo.findFirstByDocumentNumber(customerRequestVo.getDocumentNumber())
+                .defaultIfEmpty(new CustomerEntity())
+                .<CustomerRequestVo>handle((found, sink) -> {
+                    if (Objects.isNull(found.getId())) {
+                        sink.next(customerRequestVo);
+                        return;
+                    }
+                    sink.error(new ClientePersonaException("El cliente ya existe."));
+                })
                 .map(cusReqVo -> CustomerEntity.builder()
                         .name(cusReqVo.getName())
                         .gender(cusReqVo.getGender())
@@ -62,30 +72,30 @@ public class CustomerServiceImpl implements CustomerService {
                         .password(cusReqVo.getPassword())
                         .state("ACT")
                         .build())
-                .flatMap(customerRepo::save)
-                .onErrorMap(errorMap -> new RuntimeException("Ocurrio un error inesperado al guardar el cliente", errorMap))
+                .flatMap(customer -> customerRepo.save(customer)
+                        .onErrorMap(errorMap -> new ClientePersonaException("Ocurrio un error inesperado al guardar el cliente", errorMap)))
                 .map(customerMapper::toCustomerDto);
     }
 
     @Override
-    public Mono<CustomerResponseVo> update(Long id, Mono<CustomerRequestVo> customerRequestDtoMono) {
-        return Mono.error(new RuntimeException("No implementado"));
+    public Mono<CustomerResponseVo> update(UUID id, CustomerRequestVo customerRequestVo) {
+        return Mono.error(new ClientePersonaException("No implementado"));
     }
 
     @Override
-    public Mono<CustomerResponseVo> patch(Long id, Mono<CustomerRequestVo> customerRequestDtoMono) {
-        return customerRequestDtoMono.flatMap(customerRequestDto -> customerRepo.findById(id)
-                        .map(customerEntity -> {
-                            patchGeneralMapper.patchCustomerEntityFromFto(customerRequestDto, customerEntity);
-                            return customerEntity;
-                        }))
+    public Mono<CustomerResponseVo> patch(UUID id, CustomerRequestVo customerRequestVo) {
+        return customerRepo.findById(id)
+                .map(customerEntity -> {
+                    patchGeneralMapper.patchCustomerEntityFromFto(customerRequestVo, customerEntity);
+                    return customerEntity;
+                })
                 .flatMap(customerRepo::save)
                 .map(customerMapper::toCustomerDto);
     }
 
     @Override
-    public Mono<Void> delete(Long id) {
-        return Mono.error(new RuntimeException("No implementado"));
+    public Mono<Void> delete(UUID id) {
+        return Mono.error(new ClientePersonaException("No implementado"));
     }
 
 }
