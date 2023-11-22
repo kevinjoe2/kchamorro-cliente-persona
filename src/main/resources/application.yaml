@@ -3,9 +3,9 @@ server:
 ---
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:15432/cliente_persona_db
-    username: cliente_persona_usr
-    password: cliente_persona_pwd
+    url: r2dbc:postgresql://localhost:15432/banca_db
+    username: banca_usr
+    password: banca_pwd
 ---
 logging:
   level:
